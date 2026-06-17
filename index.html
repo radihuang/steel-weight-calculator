@@ -259,8 +259,37 @@
         <div class="form-group">
           <label>鋼種</label>
           <select id="steelGrade">
-            <option value="stk400">STK400</option>
-            <option value="stkr400" selected>STKR400</option>
+            <optgroup label="─── 結構用圓管 ───">
+              <option value="stk400">STK400</option>
+              <option value="stk490">STK490</option>
+              <option value="stk540">STK540</option>
+              <option value="stkn400w">STKN400W（耐震）</option>
+              <option value="stkn490b">STKN490B（耐震）</option>
+            </optgroup>
+            <optgroup label="─── 結構用角管/方管 ───">
+              <option value="stkr400" selected>STKR400</option>
+              <option value="stkr490">STKR490</option>
+              <option value="bcr295">BCR295（冷壓）</option>
+              <option value="bcp325">BCP325（冷軋）</option>
+            </optgroup>
+            <optgroup label="─── 板材：一般結構 ───">
+              <option value="ss400">SS400</option>
+            </optgroup>
+            <optgroup label="─── 板材：銲接結構 ───">
+              <option value="sm400a">SM400A（銲接）</option>
+              <option value="sm400b">SM400B（銲接）</option>
+              <option value="sm400c">SM400C（銲接）</option>
+              <option value="sm490a">SM490A（銲接）</option>
+              <option value="sm490b">SM490B（銲接）</option>
+              <option value="sm490c">SM490C（銲接）</option>
+            </optgroup>
+            <optgroup label="─── 板材：耐震建築 ───">
+              <option value="sn400a">SN400A（耐震）</option>
+              <option value="sn400b">SN400B（耐震）</option>
+              <option value="sn400c">SN400C（耐震）</option>
+              <option value="sn490b">SN490B（耐震）</option>
+              <option value="sn490c">SN490C（耐震）</option>
+            </optgroup>
           </select>
         </div>
       </div>
@@ -414,14 +443,14 @@
     </div>
     
     <div class="info-box">
-      <strong>💡 計算說明：</strong><br>
-      • TS/BOX：[(寬+高)×2 - 厚×4] × 厚 × 7.85 / 1000<br>
-      • BH：[2×寬×翼板厚 + (高-2×翼板厚)×腹板厚] × 7.85 / 1000<br>
-      • 內隔板：視為平板，面積 × 厚度 × 7.85 / 1000
+      <strong>💡 計算說明與鋼種選擇：</strong><br>
+      • 公式：TS/BOX：[(寬+高)×2 - 厚×4] × 厚 × 7.85 / 1000；BH：[2×寬×翼板厚 + (高-2×翼板厚)×腹板厚] × 7.85 / 1000<br>
+      • 密度：所有鋼種統一 7.85 kg/dm³<br>
+      • 選擇指南：主結構用 SM/SN；耐震建築用 SN/STKN；一般用 STK/STKR/SS；高強度需求用 490/540 系列
     </div>
     
     <div class="footer">
-      鋼構重量計算機 v1.1 | 支持 TS、BOX、BH 鋼材及BOX內隔板
+      鋼構重量計算機 v1.2 | 支持 TS、BOX、BH 鋼材 | 18種鋼種規範（STK/STKR/STKN/SM/SN/BCR/BCP）
     </div>
   </div>
 
