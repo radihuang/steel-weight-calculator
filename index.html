@@ -95,6 +95,33 @@
       border-bottom: 1px solid #ecf0f1;
     }
     
+    .subsection {
+      background: #f8f9fa;
+      padding: 12px;
+      border-radius: 8px;
+      border-left: 3px solid #1a5490;
+      margin-top: 12px;
+    }
+    
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+    
+    .checkbox-label {
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      color: #2c3e50;
+    }
+    
     .results {
       background: linear-gradient(135deg, #e8f4f8 0%, #f0f9fc 100%);
       border-radius: 12px;
@@ -143,6 +170,32 @@
       font-weight: 600;
       color: #2c3e50;
       word-break: break-word;
+      line-height: 1.4;
+    }
+    
+    .result-breakdown {
+      grid-column: 1 / -1;
+      padding: 12px;
+      background: #f0f9fc;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #2c3e50;
+      display: none;
+    }
+    
+    .result-breakdown.show {
+      display: block;
+    }
+    
+    .breakdown-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px solid #c8e6f5;
+    }
+    
+    .breakdown-item:last-child {
+      border-bottom: none;
     }
     
     .info-box {
@@ -250,6 +303,43 @@
             <input type="number" id="boxThickness" value="9" min="0" step="0.5">
           </div>
         </div>
+        
+        <div class="subsection">
+          <div class="checkbox-group">
+            <input type="checkbox" id="hasInternalPlate">
+            <label for="hasInternalPlate" class="checkbox-label">加入內隔板</label>
+          </div>
+          
+          <div id="internalPlateSection" style="display: none; margin-top: 12px;">
+            <div class="form-row">
+              <div class="form-group">
+                <label>隔板方向</label>
+                <select id="plateDirection">
+                  <option value="horizontal">橫向隔板</option>
+                  <option value="vertical">縱向隔板</option>
+                  <option value="both">橫縱隔板</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>隔板厚度 (mm)</label>
+                <input type="number" id="plateThickness" value="9" min="0" step="0.5">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>隔板間距 (mm)</label>
+                <input type="number" id="plateSpacing" value="300" min="0" step="10">
+              </div>
+              <div class="form-group">
+                <label>隔板數量</label>
+                <input type="number" id="plateCount" value="1" min="0" step="1">
+              </div>
+            </div>
+            <div style="font-size: 12px; color: #7f8c8d; margin-top: 8px;">
+              💡 若設隔板間距，系統會自動計算数量；若直接設数量，間距可為0
+            </div>
+          </div>
+        </div>
       </div>
       
       <div id="bhSection" style="display: none;">
@@ -307,16 +397,31 @@
       <div class="result-spec">
         規格：<span id="specDisplay">TS 300×300×9 STKR400</span>
       </div>
+      <div class="result-breakdown" id="resultBreakdown">
+        <div class="breakdown-item">
+          <span>管體重量：</span>
+          <span id="breakdownTube">-</span>
+        </div>
+        <div class="breakdown-item">
+          <span>隔板重量：</span>
+          <span id="breakdownPlate">-</span>
+        </div>
+        <div class="breakdown-item" style="border-top: 1px solid #1a5490; padding-top: 8px; margin-top: 8px; font-weight: 600;">
+          <span>合計：</span>
+          <span id="breakdownTotal">-</span>
+        </div>
+      </div>
     </div>
     
     <div class="info-box">
       <strong>💡 計算說明：</strong><br>
       • TS/BOX：[(寬+高)×2 - 厚×4] × 厚 × 7.85 / 1000<br>
-      • BH：[2×寬×翼板厚 + (高-2×翼板厚)×腹板厚] × 7.85 / 1000
+      • BH：[2×寬×翼板厚 + (高-2×翼板厚)×腹板厚] × 7.85 / 1000<br>
+      • 內隔板：視為平板，面積 × 厚度 × 7.85 / 1000
     </div>
     
     <div class="footer">
-      鋼構重量計算機 v1.0 | 適用於 TS、BOX、BH 鋼材
+      鋼構重量計算機 v1.1 | 支持 TS、BOX、BH 鋼材及BOX內隔板
     </div>
   </div>
 
@@ -336,7 +441,8 @@
         unitWeight: Math.round(unitWeight * 100) / 100,
         totalWeight: Math.round(totalWeight),
         totalWeightTons: Math.round(totalWeight * 100) / 100000,
-        spec: `TS ${width}×${height}×${thickness}`
+        spec: `TS ${width}×${height}×${thickness}`,
+        breakdown: null
       };
     }
 
@@ -346,14 +452,60 @@
       const thickness = parseFloat(document.getElementById('boxThickness').value) || 0;
       const length = parseFloat(document.getElementById('length').value) || 0;
       
-      const unitWeight = ((width + height) * 2 - thickness * 4) * thickness * density / 1000;
-      const totalWeight = unitWeight * length;
+      // 管體重量
+      const tubeUnitWeight = ((width + height) * 2 - thickness * 4) * thickness * density / 1000;
+      const tubeTotalWeight = tubeUnitWeight * length;
+      
+      // 隔板重量
+      let plateUnitWeight = 0;
+      let plateDescription = '';
+      
+      if (document.getElementById('hasInternalPlate').checked) {
+        const direction = document.getElementById('plateDirection').value;
+        const plateThickness = parseFloat(document.getElementById('plateThickness').value) || 0;
+        const plateSpacing = parseFloat(document.getElementById('plateSpacing').value) || 0;
+        const plateCountInput = parseFloat(document.getElementById('plateCount').value) || 0;
+        
+        // 計算實際隔板數量
+        let actualPlateCount = plateCountInput;
+        if (plateSpacing > 0 && length > 0) {
+          actualPlateCount = Math.max(1, Math.floor(length * 1000 / plateSpacing));
+        }
+        
+        // 根據方向計算隔板面積
+        let plateArea = 0;
+        if (direction === 'horizontal') {
+          // 橫向隔板：寬度為BOX的寬
+          plateArea = width * thickness;
+          plateDescription = `橫隔 ${width}×${plateThickness}×${actualPlateCount}片`;
+        } else if (direction === 'vertical') {
+          // 縱向隔板：寬度為BOX的高
+          plateArea = height * thickness;
+          plateDescription = `縱隔 ${height}×${plateThickness}×${actualPlateCount}片`;
+        } else if (direction === 'both') {
+          // 橫縱隔板：各一半數量
+          const halfCount = actualPlateCount / 2;
+          plateArea = (width * thickness * halfCount + height * thickness * halfCount);
+          plateDescription = `橫縱隔 ${width}×${plateThickness}×${Math.ceil(halfCount)}片 + ${height}×${plateThickness}×${Math.floor(halfCount)}片`;
+        }
+        
+        plateUnitWeight = plateArea * plateThickness * density / 1000000;
+      }
+      
+      const plateTotalWeight = plateUnitWeight * length;
+      const totalUnitWeight = tubeUnitWeight + plateUnitWeight;
+      const totalWeight = tubeTotalWeight + plateTotalWeight;
       
       return {
-        unitWeight: Math.round(unitWeight * 100) / 100,
+        unitWeight: Math.round(totalUnitWeight * 100) / 100,
         totalWeight: Math.round(totalWeight),
         totalWeightTons: Math.round(totalWeight * 100) / 100000,
-        spec: `BOX ${width}×${height}×${thickness}`
+        spec: `BOX ${width}×${height}×${thickness}${plateDescription ? ' (' + plateDescription + ')' : ''}`,
+        breakdown: {
+          tube: Math.round(tubeTotalWeight),
+          plate: Math.round(plateTotalWeight),
+          total: Math.round(totalWeight)
+        }
       };
     }
 
@@ -371,7 +523,8 @@
         unitWeight: Math.round(unitWeight * 100) / 100,
         totalWeight: Math.round(totalWeight),
         totalWeightTons: Math.round(totalWeight * 100) / 100000,
-        spec: `BH ${h}×${b}×${tw}×${tf}`
+        spec: `BH ${h}×${b}×${tw}×${tf}`,
+        breakdown: null
       };
     }
 
@@ -392,6 +545,17 @@
       document.getElementById('totalWeight').textContent = result.totalWeight.toLocaleString();
       document.getElementById('totalTons').textContent = result.totalWeightTons.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       document.getElementById('specDisplay').textContent = `${result.spec} ${grade}`;
+      
+      // 顯示或隱藏詳細構成
+      const breakdown = document.getElementById('resultBreakdown');
+      if (result.breakdown) {
+        document.getElementById('breakdownTube').textContent = `${result.breakdown.tube} kg`;
+        document.getElementById('breakdownPlate').textContent = `${result.breakdown.plate} kg`;
+        document.getElementById('breakdownTotal').textContent = `${result.breakdown.total} kg`;
+        breakdown.classList.add('show');
+      } else {
+        breakdown.classList.remove('show');
+      }
     }
 
     document.getElementById('steelType').addEventListener('change', function() {
@@ -406,6 +570,11 @@
       updateCalculation();
     });
 
+    document.getElementById('hasInternalPlate').addEventListener('change', function() {
+      document.getElementById('internalPlateSection').style.display = this.checked ? 'block' : 'none';
+      updateCalculation();
+    });
+
     document.getElementById('steelGrade').addEventListener('change', updateCalculation);
     document.getElementById('tsWidth').addEventListener('input', updateCalculation);
     document.getElementById('tsHeight').addEventListener('input', updateCalculation);
@@ -413,6 +582,10 @@
     document.getElementById('boxWidth').addEventListener('input', updateCalculation);
     document.getElementById('boxHeight').addEventListener('input', updateCalculation);
     document.getElementById('boxThickness').addEventListener('input', updateCalculation);
+    document.getElementById('plateDirection').addEventListener('change', updateCalculation);
+    document.getElementById('plateThickness').addEventListener('input', updateCalculation);
+    document.getElementById('plateSpacing').addEventListener('input', updateCalculation);
+    document.getElementById('plateCount').addEventListener('input', updateCalculation);
     document.getElementById('bhHeight').addEventListener('input', updateCalculation);
     document.getElementById('bhWidth').addEventListener('input', updateCalculation);
     document.getElementById('bhWebThickness').addEventListener('input', updateCalculation);
