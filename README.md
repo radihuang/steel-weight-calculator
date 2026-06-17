@@ -1,8 +1,8 @@
 # 鋼構重量計算機
 
-[!\[GitHub Pages](https://img.shields.io/badge/Demo-GitHub%20Pages-blue)](https://github.com)
-[!\[License](https://img.shields.io/badge/License-MIT-green)](#license)
-[!\[Language](https://img.shields.io/badge/Language-HTML%2FJS-yellow)](#技術棧)
+[![GitHub Pages](https://img.shields.io/badge/Demo-GitHub%20Pages-blue)](https://github.com)
+[![License](https://img.shields.io/badge/License-MIT-green)]()
+[![Language](https://img.shields.io/badge/Language-HTML%2FJS-yellow)]()
 
 一款快速、輕便的線上工具，用於計算鋼構柱與鋼樑的重量。適合結構工程師、建築師、工地主任等專業人士在現場使用。
 
